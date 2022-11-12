@@ -55,13 +55,17 @@ func main() {
 
 		r.Route("/ToggleWaterPump", func(r chi.Router) {
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-				controllers.PostToggleWaterPump(w, r, configuration.ApiKey, pin)
+				controllers.PostToggleWaterPump(w, r, configuration.ApiKey, pin, tiedotDBClient)
 			})
 
 		})
+
+		r.Get("/Humidity", func(w http.ResponseWriter, r *http.Request) {
+			controllers.GetCurrentHumidity(w, r, configuration.ApiKey)
+		})
 	})
 
-	httpErr := http.ListenAndServe(":3000", r)
+	httpErr := http.ListenAndServeTLS(":443", "cert.pem", "key.unencrypted.pem", r)
 	if httpErr != nil {
 		fmt.Println(httpErr)
 	}

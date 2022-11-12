@@ -10,7 +10,7 @@ import (
 func GetLogDocuments(localDbClient *db.DB) []structs.WaterPumpLog {
 	spaPasses := []structs.WaterPumpLog{}
 
-	localDbClient.Use("spapasses").ForEachDoc(func(id int, docContent []byte) (moveOn bool) {
+	localDbClient.Use("logs").ForEachDoc(func(id int, docContent []byte) (moveOn bool) {
 		spaPass := structs.WaterPumpLog{}
 		jsonSpaPass, _ := json.Marshal(docContent)
 		json.Unmarshal(jsonSpaPass, &spaPass)
