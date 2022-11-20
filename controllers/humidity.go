@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"erinmaguire/WaterPump/util"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/HouzuoGuo/tiedot/db"
-	"github.com/d2r2/go-dht"
 )
 
 func GetHumidityLogs(w http.ResponseWriter, r *http.Request, apiKey string, localDbClient *db.DB) {
@@ -18,7 +16,7 @@ func GetHumidityLogs(w http.ResponseWriter, r *http.Request, apiKey string, loca
 		return
 	}
 
-	spaPasses := util.GetLogDocuments(localDbClient)
+	spaPasses := util.GetHumidityLogDocuments(localDbClient, "humidity_logs")
 
 	jsonSpaPasses, jsonErr := json.Marshal(spaPasses)
 	if jsonErr != nil {
@@ -37,12 +35,16 @@ func GetCurrentHumidity(w http.ResponseWriter, r *http.Request, apiKey string) {
 	if authErr != nil {
 		return
 	}
-	temperature, humidity, retried, err :=
-		dht.ReadDHTxxWithRetry(dht.DHT11, 27, false, 10)
-	if err != nil {
-		log.Fatal(err)
+
+	humidityStruct := util.GetCurrentHumidity()
+
+	jsonSpaPasses, jsonErr := json.Marshal(humidityStruct)
+	if jsonErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "server error")
+		return
 	}
-	// Print temperature and humidity
-	fmt.Printf("Temperature = %v*C, Humidity = %v%% (retried %d times)\n",
-		temperature, humidity, retried)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(jsonSpaPasses)
 }

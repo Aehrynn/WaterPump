@@ -19,7 +19,7 @@ func GetWaterPumpLogs(w http.ResponseWriter, r *http.Request, apiKey string, loc
 		return
 	}
 
-	spaPasses := util.GetLogDocuments(localDbClient)
+	spaPasses := util.GetLogDocuments(localDbClient, "logs")
 
 	jsonSpaPasses, jsonErr := json.Marshal(spaPasses)
 	if jsonErr != nil {
@@ -44,7 +44,7 @@ func PostToggleWaterPump(w http.ResponseWriter, r *http.Request, apiKey string, 
 		Timestamp: time.Now(),
 	}
 	var myMap map[string]interface{}
-	data, _ := json.Marshal(waterpumpLog)
+	data, _ := json.Marshal(&waterpumpLog)
 	json.Unmarshal(data, &myMap)
 
 	_, insertErr := localDbClient.Use("logs").Insert(myMap)

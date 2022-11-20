@@ -3,11 +3,14 @@ package main
 import (
 	"erinmaguire/WaterPump/controllers"
 	"erinmaguire/WaterPump/structs"
+	"erinmaguire/WaterPump/util"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/HouzuoGuo/tiedot/db"
+	"github.com/go-co-op/gocron"
 	"github.com/spf13/viper"
 	"github.com/stianeikeland/go-rpio/v4"
 
@@ -35,13 +38,19 @@ func main() {
 	if dbErr != nil {
 		panic(dbErr)
 	}
+	defer tiedotDBClient.Close()
 
 	tiedotDBClient.Create("logs")
+	tiedotDBClient.Create("humidity_logs")
 	rpio.Open()
 	defer rpio.Close()
 	pin := rpio.Pin(configuration.WaterPumpRelayGpio)
 	//4 22 6 26
 	pin.Output()
+	util.LogCurrentHumidity(tiedotDBClient)
+	scheduler := gocron.NewScheduler(time.UTC)
+	scheduler.Cron(configuration.HumidityCron).Do(util.LogCurrentHumidity, tiedotDBClient)
+	scheduler.StartAsync()
 
 	log.Println("Water Pump Local Server Started")
 
@@ -62,6 +71,10 @@ func main() {
 
 		r.Get("/Humidity", func(w http.ResponseWriter, r *http.Request) {
 			controllers.GetCurrentHumidity(w, r, configuration.ApiKey)
+		})
+
+		r.Get("/HumidityLogs", func(w http.ResponseWriter, r *http.Request) {
+			controllers.GetHumidityLogs(w, r, configuration.ApiKey, tiedotDBClient)
 		})
 	})
 
